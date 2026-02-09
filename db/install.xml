@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/assign/submission/ytsubmission/db"
+       VERSION="2025111102"
+       COMMENT="Database tables for YouTube Submission (assignsubmission_ytsubmission) plugin"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+
+    <TABLES>
+
+        <!-- ========================================================= -->
+        <!-- Table: assignsubmission_ytsubmission                      -->
+        <!-- Stores the base YouTube submission data per assignment.   -->
+        <!-- ========================================================= -->
+        <TABLE NAME="assignsubmission_ytsubmission"
+               COMMENT="YouTube video submission data for assignment plugin">
+            <FIELDS>
+                <FIELD NAME="id"           TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="submissionid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK to assign_submission.id"/>
+                <FIELD NAME="assignment"   TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK to assign.id"/>
+                <FIELD NAME="youtubeid"    TYPE="char" LENGTH="64" NOTNULL="true" COMMENT="YouTube video identifier"/>
+                <FIELD NAME="videourl"     TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Full YouTube video URL"/>
+                <FIELD NAME="thumbnail"    TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="YouTube video thumbnail URL"/>
+                <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Last modification time"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+                <KEY NAME="submissionfk" TYPE="foreign" FIELDS="submissionid" REFTABLE="assign_submission" REFFIELDS="id" ONDELETE="CASCADE"/>
+                <KEY NAME="assignmentfk" TYPE="foreign" FIELDS="assignment"   REFTABLE="assign" REFFIELDS="id" ONDELETE="CASCADE"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="youtubeid_ix" UNIQUE="true" FIELDS="youtubeid"/>
+            </INDEXES>
+        </TABLE>
+
+        <!-- ========================================================= -->
+        <!-- Table: assignsubmission_ytsubmission_comments             -->
+        <!-- Stores timestamped grading comments for YouTube videos.   -->
+        <!-- ========================================================= -->
+        <TABLE NAME="assignsubmission_ytsubmission_comments"
+               COMMENT="Timestamped grading comments for YouTube submissions">
+            <FIELDS>
+                <FIELD NAME="id"           TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="submissionid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK to assign_submission.id"/>
+                <FIELD NAME="assignmentid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK to assign.id"/>
+                <FIELD NAME="graderid"     TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User ID of grader"/>
+                <FIELD NAME="timestamp"    TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Video timestamp in seconds"/>
+                <FIELD NAME="comment"      TYPE="text" NOTNULL="true" COMMENT="Text of the comment"/>
+                <FIELD NAME="commenttype"  TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="general" COMMENT="Comment category: general, praise, correction, suggestion, question"/>
+                <FIELD NAME="timecreated"  TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Time created (UNIX timestamp)"/>
+                <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Time modified (UNIX timestamp)"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary"        TYPE="primary" FIELDS="id"/>
+                <KEY NAME="submissionfk"   TYPE="foreign" FIELDS="submissionid"  REFTABLE="assign_submission" REFFIELDS="id" ONDELETE="CASCADE"/>
+                <KEY NAME="assignmentfk"   TYPE="foreign" FIELDS="assignmentid"  REFTABLE="assign" REFFIELDS="id" ONDELETE="CASCADE"/>
+                <KEY NAME="graderfk"       TYPE="foreign" FIELDS="graderid"      REFTABLE="user" REFFIELDS="id" ONDELETE="CASCADE"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="submission_comments_ix" UNIQUE="false" FIELDS="submissionid"/>
+                <INDEX NAME="grader_ix"              UNIQUE="false" FIELDS="graderid"/>
+            </INDEXES>
+        </TABLE>
+
+        <!-- ========================================================= -->
+        <!-- Table: assignsubmission_ytsubmission_comlib               -->
+        <!-- Stores reusable comment library entries.                   -->
+        <!-- ========================================================= -->
+        <TABLE NAME="assignsubmission_ytsubmission_comlib"
+               COMMENT="Reusable comment library for YouTube submission grading">
+            <FIELDS>
+                <FIELD NAME="id"           TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="userid"       TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK to user.id (comment owner)"/>
+                <FIELD NAME="courseid"     TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="0=personal, course ID=shared"/>
+                <FIELD NAME="commenttext"  TYPE="text" NOTNULL="true" COMMENT="Reusable comment text (HTML)"/>
+                <FIELD NAME="commenttype"  TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="general" COMMENT="Category type"/>
+                <FIELD NAME="sortorder"    TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Display sort order"/>
+                <FIELD NAME="timecreated"  TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Creation timestamp"/>
+                <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Modification timestamp"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+                <KEY NAME="userfk"  TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id" ONDELETE="CASCADE"/>
+            </KEYS>
+            <INDEXES>
+                <INDEX NAME="courseid_ix" UNIQUE="false" FIELDS="courseid"/>
+                <INDEX NAME="usertype_ix" UNIQUE="false" FIELDS="userid, commenttype"/>
+            </INDEXES>
+        </TABLE>
+
+    </TABLES>
+</XMLDB>
