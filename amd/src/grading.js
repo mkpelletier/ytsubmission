@@ -814,10 +814,24 @@ define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notificat
         videoId = data.videoId;
         submissionId = data.submissionId;
         assignId = data.assignId;
-        commentsData = data.comments || [];
-        commentTypes = data.commentTypes || {};
         readOnly = !!data.readOnly;
         courseId = data.courseId || 0;
+
+        // Read large data from DOM data attribute to avoid js_call_amd size limit.
+        var payloadEl = document.getElementById('ytsubmission-jsdata');
+        if (payloadEl) {
+            try {
+                var payload = JSON.parse(payloadEl.getAttribute('data-payload'));
+                commentsData = payload.comments || [];
+                commentTypes = payload.commentTypes || {};
+            } catch (e) {
+                commentsData = [];
+                commentTypes = {};
+            }
+        } else {
+            commentsData = data.comments || [];
+            commentTypes = data.commentTypes || {};
+        }
 
         if (!readOnly && !assignId) {
             Notification.alert('Error', 'Assignment ID missing. Cannot add comments.', 'OK');

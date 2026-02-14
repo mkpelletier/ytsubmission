@@ -9,7 +9,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026021300;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2026021400;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2024042200;        // Requires Moodle 5.0 or later.
 $plugin->component = 'assignsubmission_ytsubmission'; // Full name of the plugin.
 $plugin->maturity  = MATURITY_STABLE;

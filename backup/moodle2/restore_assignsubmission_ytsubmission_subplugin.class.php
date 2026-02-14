@@ -23,19 +23,17 @@ class restore_assignsubmission_ytsubmission_subplugin extends restore_subplugin 
      * @return array Array of restore path elements
      */
     protected function define_submission_subplugin_structure() {
-        try {
-            $paths = array();
+        $paths = [];
 
-            // Define the path for YouTube submission data.
-            $elename = $this->get_namefor('submission_ytsubmission');
-            $elepath = $this->get_pathfor('/submission_ytsubmission');
-            $paths[] = new restore_path_element($elename, $elepath);
+        $elename = $this->get_namefor('submission_ytsubmission');
+        $elepath = $this->get_pathfor('/submission_ytsubmission');
+        $paths[] = new restore_path_element($elename, $elepath);
 
-            return $paths;
-        } catch (Exception $e) {
-            debugging('Error defining restore structure: ' . $e->getMessage(), DEBUG_DEVELOPER);
-            return array();
-        }
+        $elename = $this->get_namefor('submission_ytsubmission_comment');
+        $elepath = $this->get_pathfor('/submission_ytsubmission/submission_ytsubmission_comment');
+        $paths[] = new restore_path_element($elename, $elepath);
+
+        return $paths;
     }
 
     /**
@@ -46,17 +44,35 @@ class restore_assignsubmission_ytsubmission_subplugin extends restore_subplugin 
     public function process_assignsubmission_ytsubmission_submission_ytsubmission($data) {
         global $DB;
 
-        try {
-            $data = (object)$data;
+        $data = (object) $data;
+        $oldid = $data->id;
 
-            // Get the new submission ID from the mapping.
-            $data->submission = $this->get_new_parentid('submission');
-            $data->assignment = $this->get_mappingid('assign', $this->task->get_activityid());
+        $data->submissionid = $this->get_new_parentid('submission');
+        $data->assignment = $this->get_mappingid('assign', $data->assignment);
 
-            // Insert the restored YouTube submission data.
-            $DB->insert_record('assignsubmission_ytsubmission', $data);
-        } catch (Exception $e) {
-            debugging('Error processing restore data: ' . $e->getMessage(), DEBUG_DEVELOPER);
-        }
+        $newid = $DB->insert_record('assignsubmission_ytsubmission', $data);
+        $this->set_mapping('assignsubmission_ytsubmission', $oldid, $newid);
+    }
+
+    /**
+     * Process a comment during restore
+     *
+     * @param array $data The comment data to restore
+     */
+    public function process_assignsubmission_ytsubmission_submission_ytsubmission_comment($data) {
+        global $DB;
+
+        $data = (object) $data;
+        $oldid = $data->id;
+
+        $data->submissionid = $this->get_new_parentid('submission');
+        $data->assignmentid = $this->get_mappingid('assign', $data->assignmentid);
+        $data->graderid = $this->get_mappingid('user', $data->graderid);
+
+        $newid = $DB->insert_record('assignsubmission_ytsubmission_comments', $data);
+        $this->set_mapping('assignsubmission_ytsubmission_comment', $oldid, $newid, true);
+
+        // Restore files for this comment.
+        $this->add_related_files('assignsubmission_ytsubmission', 'commentfiles', 'assignsubmission_ytsubmission_comment', null, $oldid);
     }
 }

@@ -77,7 +77,6 @@ class provider implements
                 );
             }
         } catch (\Exception $e) {
-            debugging('Error exporting user data: ' . $e->getMessage(), DEBUG_DEVELOPER);
         }
     }
 
@@ -94,7 +93,6 @@ class provider implements
                 'assignment' => $deletedata->get_assign()->get_instance()->id
             ]);
         } catch (\Exception $e) {
-            debugging('Error deleting submission for context: ' . $e->getMessage(), DEBUG_DEVELOPER);
         }
     }
 
@@ -114,7 +112,6 @@ class provider implements
                 ]);
             }
         } catch (\Exception $e) {
-            debugging('Error deleting submission for user: ' . $e->getMessage(), DEBUG_DEVELOPER);
         }
     }
 }

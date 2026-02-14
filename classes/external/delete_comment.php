@@ -46,7 +46,6 @@ class delete_comment extends external_api {
         ]);
 
         try {
-            debugging('ytsubmission delete_comment: Starting deletion for comment ID: ' . $params['commentid'], DEBUG_DEVELOPER);
 
             // Fetch comment to get submission and assignment context.
             $comment = $DB->get_record(
@@ -56,7 +55,6 @@ class delete_comment extends external_api {
                 MUST_EXIST
             );
 
-            debugging('ytsubmission delete_comment: Comment found for submission ID: ' . $comment->submissionid, DEBUG_DEVELOPER);
 
             // Fetch the submission to get the assignment ID.
             $submission = $DB->get_record(
@@ -66,7 +64,6 @@ class delete_comment extends external_api {
                 MUST_EXIST
             );
 
-            debugging('ytsubmission delete_comment: Submission found for assignment ID: ' . $submission->assignment, DEBUG_DEVELOPER);
 
             // Get the course module and validate context.
             $cm = get_coursemodule_from_instance('assign', $submission->assignment, 0, false, MUST_EXIST);
@@ -75,7 +72,6 @@ class delete_comment extends external_api {
             self::validate_context($context);
             require_capability('mod/assign:grade', $context);
 
-            debugging('ytsubmission delete_comment: Context validated, user has capability', DEBUG_DEVELOPER);
 
             // Delete the comment.
             $deleted = $DB->delete_records('assignsubmission_ytsubmission_comments', ['id' => $params['commentid']]);
@@ -89,7 +85,6 @@ class delete_comment extends external_api {
             $fs = get_file_storage();
             $fs->delete_area_files($context->id, 'assignsubmission_ytsubmission', 'commentfiles', $params['commentid']);
 
-            debugging('ytsubmission delete_comment: Comment deleted successfully', DEBUG_DEVELOPER);
 
             // Build the response with explicit type casting.
             $response = [
@@ -97,12 +92,10 @@ class delete_comment extends external_api {
                 'message' => (string)'Comment deleted successfully.',
             ];
 
-            debugging('ytsubmission delete_comment: Response prepared: ' . json_encode($response), DEBUG_DEVELOPER);
 
             return $response;
 
         } catch (\moodle_exception $e) {
-            debugging('ytsubmission delete_comment: Moodle exception caught: ' . $e->getMessage(), DEBUG_DEVELOPER);
 
             return [
                 'success' => false,
@@ -110,7 +103,6 @@ class delete_comment extends external_api {
             ];
 
         } catch (\Exception $e) {
-            debugging('ytsubmission delete_comment: General exception caught: ' . $e->getMessage(), DEBUG_DEVELOPER);
 
             return [
                 'success' => false,

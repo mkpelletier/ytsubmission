@@ -56,10 +56,8 @@ class assign_submission_ytsubmission extends assign_submission_plugin {
      */
     public function get_name() {
         try {
-            debugging('ytsubmission: get_name() called', DEBUG_DEVELOPER);
             return get_string('ytsubmission', 'assignsubmission_ytsubmission');
         } catch (\Exception $e) {
-            debugging('ytsubmission: Error getting plugin name: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return 'YouTube Submission';
         }
     }
@@ -79,9 +77,6 @@ class assign_submission_ytsubmission extends assign_submission_plugin {
         global $DB;
 
         try {
-            debugging('ytsubmission: get_form_elements() called', DEBUG_DEVELOPER);
-            debugging('ytsubmission: Submission ID: ' . ($submission ? $submission->id : 'NULL'), DEBUG_DEVELOPER);
-            debugging('ytsubmission: Form data: ' . print_r($data, true), DEBUG_DEVELOPER);
 
             // Get existing submission if available (using correct field name: submissionid).
             $videourl = '';
@@ -97,12 +92,9 @@ class assign_submission_ytsubmission extends assign_submission_plugin {
 
                     if ($ytsubmission) {
                         $videourl = $ytsubmission->videourl;
-                        debugging('ytsubmission: Found existing submission with URL: ' . $videourl, DEBUG_DEVELOPER);
                     } else {
-                        debugging('ytsubmission: No existing submission found', DEBUG_DEVELOPER);
                     }
                 } catch (\Exception $e) {
-                    debugging('ytsubmission: Error loading existing submission: ' . $e->getMessage(), DEBUG_DEVELOPER);
                 }
             }
 
@@ -123,13 +115,10 @@ class assign_submission_ytsubmission extends assign_submission_plugin {
 
             if ($videourl) {
                 $mform->setDefault('assignsubmission_ytsubmission_youtubeurl', $videourl);
-                debugging('ytsubmission: Set default URL: ' . $videourl, DEBUG_DEVELOPER);
             }
 
-            debugging('ytsubmission: Form elements added successfully', DEBUG_DEVELOPER);
             return true;
         } catch (\Exception $e) {
-            debugging('ytsubmission: Error in get_form_elements: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return false;
         }
     }
@@ -150,23 +139,16 @@ class assign_submission_ytsubmission extends assign_submission_plugin {
         global $DB;
 
         try {
-            debugging('ytsubmission: save() called', DEBUG_DEVELOPER);
-            debugging('ytsubmission: Submission object: ' . print_r($submission, true), DEBUG_DEVELOPER);
-            debugging('ytsubmission: Form data received: ' . print_r($data, true), DEBUG_DEVELOPER);
 
             // Get the YouTube URL from the form data.
             $youtubeurl = '';
             if (isset($data->assignsubmission_ytsubmission_youtubeurl)) {
                 $youtubeurl = trim($data->assignsubmission_ytsubmission_youtubeurl);
-                debugging('ytsubmission: YouTube URL from form: ' . $youtubeurl, DEBUG_DEVELOPER);
             } else {
-                debugging('ytsubmission: Field assignsubmission_ytsubmission_youtubeurl not found in data', DEBUG_DEVELOPER);
-                debugging('ytsubmission: Available fields: ' . implode(', ', array_keys((array)$data)), DEBUG_DEVELOPER);
             }
 
             // Validate that we have a YouTube URL.
             if (empty($youtubeurl)) {
-                debugging('ytsubmission: No YouTube URL provided - allowing empty submission', DEBUG_DEVELOPER);
                 return true; // Allow empty submissions.
             }
 
@@ -174,11 +156,9 @@ class assign_submission_ytsubmission extends assign_submission_plugin {
             $videoid = $this->extract_video_id($youtubeurl);
 
             if (!$videoid) {
-                debugging('ytsubmission: Invalid YouTube URL: ' . $youtubeurl, DEBUG_DEVELOPER);
                 throw new \moodle_exception('invalidurl', 'assignsubmission_ytsubmission');
             }
 
-            debugging('ytsubmission: Extracted video ID: ' . $videoid, DEBUG_DEVELOPER);
 
             // Check if a submission already exists (using correct field name: submissionid).
             try {
@@ -190,12 +170,9 @@ class assign_submission_ytsubmission extends assign_submission_plugin {
                 );
 
                 if ($ytsubmission) {
-                    debugging('ytsubmission: Found existing submission record with ID: ' . $ytsubmission->id, DEBUG_DEVELOPER);
                 } else {
-                    debugging('ytsubmission: No existing submission record found', DEBUG_DEVELOPER);
                 }
             } catch (\Exception $e) {
-                debugging('ytsubmission: Error checking existing submission: ' . $e->getMessage(), DEBUG_DEVELOPER);
                 $ytsubmission = false;
             }
 
@@ -208,44 +185,33 @@ class assign_submission_ytsubmission extends assign_submission_plugin {
             $submissiondata->thumbnail = 'https://img.youtube.com/vi/' . $videoid . '/hqdefault.jpg';
             $submissiondata->timemodified = time();
 
-            debugging('ytsubmission: Prepared submission data: ' . print_r($submissiondata, true), DEBUG_DEVELOPER);
 
             if ($ytsubmission) {
                 // Update existing submission.
                 $submissiondata->id = $ytsubmission->id;
 
                 try {
-                    debugging('ytsubmission: Attempting to update existing record', DEBUG_DEVELOPER);
                     $result = $DB->update_record('assignsubmission_ytsubmission', $submissiondata);
-                    debugging('ytsubmission: Update result: ' . ($result ? 'SUCCESS' : 'FAILED'), DEBUG_DEVELOPER);
                 } catch (\Exception $e) {
-                    debugging('ytsubmission: Error updating submission: ' . $e->getMessage(), DEBUG_DEVELOPER);
                     throw new \moodle_exception('errorsaving', 'assignsubmission_ytsubmission');
                 }
             } else {
                 // Insert new submission.
                 try {
-                    debugging('ytsubmission: Attempting to insert new record', DEBUG_DEVELOPER);
                     $submissiondata->id = $DB->insert_record('assignsubmission_ytsubmission', $submissiondata);
-                    debugging('ytsubmission: Insert successful with ID: ' . $submissiondata->id, DEBUG_DEVELOPER);
                 } catch (\Exception $e) {
-                    debugging('ytsubmission: Error inserting submission: ' . $e->getMessage(), DEBUG_DEVELOPER);
                     throw new \moodle_exception('errorsaving', 'assignsubmission_ytsubmission');
                 }
             }
 
             // Trigger assessable_uploaded event.
-            debugging('ytsubmission: Triggering assessable_uploaded event', DEBUG_DEVELOPER);
             $this->trigger_assessable_uploaded_event($submission, $youtubeurl);
 
-            debugging('ytsubmission: save() completed successfully', DEBUG_DEVELOPER);
             return true;
         } catch (\moodle_exception $e) {
-            debugging('ytsubmission: Moodle exception in save: ' . $e->getMessage(), DEBUG_DEVELOPER);
             // Re-throw Moodle exceptions.
             throw $e;
         } catch (\Exception $e) {
-            debugging('ytsubmission: Unexpected error in save: ' . $e->getMessage(), DEBUG_DEVELOPER);
             throw new \moodle_exception('errorsaving', 'assignsubmission_ytsubmission');
         }
     }
@@ -264,20 +230,16 @@ class assign_submission_ytsubmission extends assign_submission_plugin {
      */
     private function extract_video_id($url) {
         try {
-            debugging('ytsubmission: extract_video_id() called with URL: ' . $url, DEBUG_DEVELOPER);
 
             // Pattern to match various YouTube URL formats.
             $pattern = '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i';
 
             if (preg_match($pattern, $url, $matches)) {
-                debugging('ytsubmission: Successfully extracted video ID: ' . $matches[1], DEBUG_DEVELOPER);
                 return $matches[1];
             }
 
-            debugging('ytsubmission: Could not extract video ID from URL: ' . $url, DEBUG_DEVELOPER);
             return false;
         } catch (\Exception $e) {
-            debugging('ytsubmission: Error extracting video ID: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return false;
         }
     }
@@ -299,7 +261,6 @@ class assign_submission_ytsubmission extends assign_submission_plugin {
 public function view(stdClass $submission) {
     global $CFG, $DB, $PAGE;
     try {
-        debugging('ytsubmission: view() called for submission ID: ' . $submission->id, DEBUG_DEVELOPER);
         // Get the YouTube submission (using correct field name: submissionid).
         $ytsubmission = $DB->get_record(
             'assignsubmission_ytsubmission',
@@ -308,21 +269,17 @@ public function view(stdClass $submission) {
             IGNORE_MISSING
         );
         if (!$ytsubmission) {
-            debugging('ytsubmission: No submission found for display', DEBUG_DEVELOPER);
             return get_string('nosubmission', 'assignsubmission_ytsubmission');
         }
-        debugging('ytsubmission: Displaying video with ID: ' . $ytsubmission->youtubeid, DEBUG_DEVELOPER);
         // Check if user can grade to determine which interface to show.
         $context = $this->assignment->get_context();
         $cangrade = has_capability('mod/assign:grade', $context);
-        debugging('ytsubmission: User can grade: ' . ($cangrade ? 'YES' : 'NO'), DEBUG_DEVELOPER);
         // Get existing feedback comments (using correct field name: submissionid).
         $comments = $DB->get_records(
             'assignsubmission_ytsubmission_comments',
             ['submissionid' => $submission->id],
             'timestamp ASC'
         );
-        debugging('ytsubmission: Found ' . count($comments) . ' feedback comments', DEBUG_DEVELOPER);
         // Build the output HTML.
         $output = '';
         // Add custom CSS for the grading interface.
@@ -381,7 +338,7 @@ public function view(stdClass $submission) {
             }
         ';
         $output .= html_writer::end_tag('style');
-        $output .= html_writer::start_div('ytsubmission-grading-container');
+        $output .= html_writer::start_div('ytsubmission-grading-container', ['id' => 'ytsubmission-grading-container']);
         // Video section.
         $output .= html_writer::start_div('ytsubmission-video-section');
         if ($cangrade) {
@@ -574,7 +531,7 @@ public function view(stdClass $submission) {
             // Build comments array for JS timeline markers.
             $jscomments = [];
             foreach ($comments as $c) {
-                $graderobj = $DB->get_record('user', ['id' => $c->graderid], 'firstname,lastname', MUST_EXIST);
+                $graderobj = \core_user::get_user($c->graderid, '*', MUST_EXIST);
                 $jscomments[] = [
                     'id' => (int)$c->id,
                     'timestamp' => (int)$c->timestamp,
@@ -593,23 +550,28 @@ public function view(stdClass $submission) {
                 ];
             }
 
-            $jsdata = [
-                'videoId'      => $ytsubmission->youtubeid,
-                'submissionId' => (int)$submission->id,
-                'assignId'     => (int)$this->assignment->get_instance()->id,
+            // Embed large data via data attribute to avoid js_call_amd size limit.
+            $embeddeddata = json_encode([
                 'comments'     => $jscomments,
                 'commentTypes' => $jscommenttypes,
-                'readOnly'     => false,
-                'courseId'     => (int)$this->assignment->get_course()->id,
-            ];
+            ]);
+            $output .= html_writer::tag('div', '', [
+                'id' => 'ytsubmission-jsdata',
+                'data-payload' => $embeddeddata,
+                'style' => 'display:none;',
+            ]);
 
             $PAGE->requires->js_call_amd(
                 'assignsubmission_ytsubmission/grading',
                 'init',
-                [$jsdata]
+                [[
+                    'videoId'      => $ytsubmission->youtubeid,
+                    'submissionId' => (int)$submission->id,
+                    'assignId'     => (int)$this->assignment->get_instance()->id,
+                    'readOnly'     => false,
+                    'courseId'     => (int)$this->assignment->get_course()->id,
+                ]]
             );
-
-            debugging('ytsubmission: Grading JS initialized with data: ' . json_encode($jsdata), DEBUG_DEVELOPER);
             // ——————————————————————————————————————
 
         } else {
@@ -631,7 +593,7 @@ public function view(stdClass $submission) {
             // Initialize JS for student view (read-only timeline).
             $jscomments = [];
             foreach ($comments as $c) {
-                $graderobj = $DB->get_record('user', ['id' => $c->graderid], 'firstname,lastname', MUST_EXIST);
+                $graderobj = \core_user::get_user($c->graderid, '*', MUST_EXIST);
                 $jscomments[] = [
                     'id' => (int)$c->id,
                     'timestamp' => (int)$c->timestamp,
@@ -649,26 +611,32 @@ public function view(stdClass $submission) {
                 ];
             }
 
-            $jsdata = [
-                'videoId'      => $ytsubmission->youtubeid,
-                'submissionId' => (int)$submission->id,
-                'assignId'     => (int)$this->assignment->get_instance()->id,
+            // Embed large data via data attribute to avoid js_call_amd size limit.
+            $embeddeddata = json_encode([
                 'comments'     => $jscomments,
                 'commentTypes' => $jscommenttypes,
-                'readOnly'     => true,
-                'courseId'     => 0,
-            ];
+            ]);
+            $output .= html_writer::tag('div', '', [
+                'id' => 'ytsubmission-jsdata',
+                'data-payload' => $embeddeddata,
+                'style' => 'display:none;',
+            ]);
 
             $PAGE->requires->js_call_amd(
                 'assignsubmission_ytsubmission/grading',
                 'init',
-                [$jsdata]
+                [[
+                    'videoId'      => $ytsubmission->youtubeid,
+                    'submissionId' => (int)$submission->id,
+                    'assignId'     => (int)$this->assignment->get_instance()->id,
+                    'readOnly'     => true,
+                    'courseId'     => 0,
+                ]]
             );
         }
         $output .= html_writer::end_div(); // End grading container.
         return $output;
     } catch (\Exception $e) {
-        debugging('ytsubmission: Error in view: ' . $e->getMessage(), DEBUG_DEVELOPER);
         return get_string('errorloading', 'assignsubmission_ytsubmission');
     }
 }
@@ -685,7 +653,6 @@ public function view(stdClass $submission) {
         global $DB;
 
         try {
-            debugging('ytsubmission: view_summary() called for submission ID: ' . $submission->id, DEBUG_DEVELOPER);
 
             // Use correct field name: submissionid.
             $ytsubmission = $DB->get_record(
@@ -696,19 +663,13 @@ public function view(stdClass $submission) {
             );
 
             if ($ytsubmission && !empty($ytsubmission->videourl)) {
-                $showviewlink = true;
-                debugging('ytsubmission: Returning summary with video link', DEBUG_DEVELOPER);
-                return html_writer::link(
-                    $ytsubmission->videourl,
-                    get_string('watchvideo', 'assignsubmission_ytsubmission'),
-                    ['target' => '_blank']
-                );
+                // Show the full grading/view interface directly without collapsing.
+                $showviewlink = false;
+                return $this->view($submission);
             }
 
-            debugging('ytsubmission: No submission for summary', DEBUG_DEVELOPER);
             return get_string('nosubmission', 'assignsubmission_ytsubmission');
         } catch (\Exception $e) {
-            debugging('ytsubmission: Error in view_summary: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return get_string('errorloading', 'assignsubmission_ytsubmission');
         }
     }
@@ -819,7 +780,6 @@ public function view(stdClass $submission) {
 
             return $output;
         } catch (\Exception $e) {
-            debugging('ytsubmission: Error rendering comment: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return '';
         }
     }
@@ -834,7 +794,6 @@ public function view(stdClass $submission) {
         global $DB;
 
         try {
-            debugging('ytsubmission: is_empty() called for submission ID: ' . $submission->id, DEBUG_DEVELOPER);
 
             // Use correct field name: submissionid.
             $ytsubmission = $DB->get_record(
@@ -845,11 +804,9 @@ public function view(stdClass $submission) {
             );
 
             $isempty = empty($ytsubmission) || empty($ytsubmission->videourl);
-            debugging('ytsubmission: is_empty() result: ' . ($isempty ? 'TRUE (empty)' : 'FALSE (has content)'), DEBUG_DEVELOPER);
 
             return $isempty;
         } catch (\Exception $e) {
-            debugging('ytsubmission: Error in is_empty: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return true;
         }
     }
@@ -860,7 +817,6 @@ public function view(stdClass $submission) {
      * @return array Array of file area names
      */
     public function get_file_areas() {
-        debugging('ytsubmission: get_file_areas() called', DEBUG_DEVELOPER);
         return ['commentfiles' => get_string('commentfiles', 'assignsubmission_ytsubmission')];
     }
 
@@ -875,9 +831,6 @@ public function view(stdClass $submission) {
         global $DB;
 
         try {
-            debugging('ytsubmission: copy_submission() called', DEBUG_DEVELOPER);
-            debugging('ytsubmission: Source submission ID: ' . $sourcesubmission->id, DEBUG_DEVELOPER);
-            debugging('ytsubmission: Dest submission ID: ' . $destsubmission->id, DEBUG_DEVELOPER);
 
             // Get the source YouTube submission (using correct field name: submissionid).
             $sourceyt = $DB->get_record(
@@ -888,7 +841,6 @@ public function view(stdClass $submission) {
             );
 
             if (!$sourceyt) {
-                debugging('ytsubmission: No source submission to copy', DEBUG_DEVELOPER);
                 return true;
             }
 
@@ -900,15 +852,12 @@ public function view(stdClass $submission) {
 
             try {
                 $newid = $DB->insert_record('assignsubmission_ytsubmission', $destyt);
-                debugging('ytsubmission: Copied submission with new ID: ' . $newid, DEBUG_DEVELOPER);
             } catch (\Exception $e) {
-                debugging('ytsubmission: Error copying submission: ' . $e->getMessage(), DEBUG_DEVELOPER);
                 return false;
             }
 
             return true;
         } catch (\Exception $e) {
-            debugging('ytsubmission: Error in copy_submission: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return false;
         }
     }
@@ -923,23 +872,19 @@ public function view(stdClass $submission) {
     public function remove($submission) {
         global $DB;
 
-        debugging('ytsubmission: Attempting to remove YouTube submission for submission ID: ' . $submission->id, DEBUG_DEVELOPER);
 
         try {
             // Check if there is a record to delete (using correct field name: submissionid).
             $exists = $DB->record_exists('assignsubmission_ytsubmission', ['submissionid' => $submission->id]);
 
             if (!$exists) {
-                debugging('ytsubmission: No YouTube submission record found to delete for submission ID: ' . $submission->id, DEBUG_DEVELOPER);
                 return true; // Nothing to delete, not an error.
             }
 
             $DB->delete_records('assignsubmission_ytsubmission', ['submissionid' => $submission->id]);
-            debugging('ytsubmission: YouTube submission deleted successfully for submission ID: ' . $submission->id, DEBUG_DEVELOPER);
             return true;
 
         } catch (\Exception $e) {
-            debugging('ytsubmission: Exception while deleting YouTube submission: ' . $e->getMessage(), DEBUG_DEVELOPER);
             throw new \moodle_exception('errordeleting', 'assignsubmission_ytsubmission', '', null, $e->getMessage());
         }
     }
@@ -953,7 +898,6 @@ public function view(stdClass $submission) {
      */
     private function trigger_assessable_uploaded_event(stdClass $submission, $youtubeurl) {
         try {
-            debugging('ytsubmission: trigger_assessable_uploaded_event() called', DEBUG_DEVELOPER);
 
             $params = [
                 'context' => $this->assignment->get_context(),
@@ -964,16 +908,13 @@ public function view(stdClass $submission) {
                 ]
             ];
 
-            debugging('ytsubmission: Event params: ' . print_r($params, true), DEBUG_DEVELOPER);
 
             $event = \assignsubmission_ytsubmission\event\assessable_uploaded::create($params);
             $event->set_assign($this->assignment);
             $event->trigger();
 
-            debugging('ytsubmission: Event triggered successfully', DEBUG_DEVELOPER);
         } catch (\Exception $e) {
             // Log the error but don't fail the submission.
-            debugging('ytsubmission: Error triggering assessable_uploaded event: ' . $e->getMessage(), DEBUG_DEVELOPER);
         }
     }
 
@@ -986,7 +927,6 @@ public function view(stdClass $submission) {
      * @return bool True if upgrade is possible
      */
     public function can_upgrade($type, $version) {
-        debugging('ytsubmission: can_upgrade() called', DEBUG_DEVELOPER);
         // This is a new plugin, no upgrade path needed.
         return false;
     }
@@ -1001,7 +941,6 @@ public function view(stdClass $submission) {
         global $DB;
 
         try {
-            debugging('ytsubmission: format_for_log() called for submission ID: ' . $submission->id, DEBUG_DEVELOPER);
 
             // Use correct field name: submissionid.
             $ytsubmission = $DB->get_record(
@@ -1017,7 +956,6 @@ public function view(stdClass $submission) {
 
             return '';
         } catch (\Exception $e) {
-            debugging('ytsubmission: Error in format_for_log: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return '';
         }
     }
@@ -1032,7 +970,6 @@ public function view(stdClass $submission) {
     public function submission_is_empty(stdClass $submission) {
         global $DB;
 
-        debugging('ytsubmission: submission_is_empty() called', DEBUG_DEVELOPER);
 
         try {
             // First check if there's data in the database (using correct field name: submissionid).
@@ -1044,7 +981,6 @@ public function view(stdClass $submission) {
             );
 
             if ($ytsubmission && !empty($ytsubmission->videourl)) {
-                debugging('ytsubmission: submission_is_empty() - Found existing data in DB, returning FALSE', DEBUG_DEVELOPER);
                 return false;
             }
 
@@ -1052,18 +988,14 @@ public function view(stdClass $submission) {
             // We need to check the current request for the YouTube URL field.
             $youtubeurl = optional_param('assignsubmission_ytsubmission_youtubeurl', '', PARAM_URL);
 
-            debugging('ytsubmission: submission_is_empty() - Checking form data: ' . $youtubeurl, DEBUG_DEVELOPER);
 
             if (!empty($youtubeurl)) {
-                debugging('ytsubmission: submission_is_empty() - Found form data, returning FALSE', DEBUG_DEVELOPER);
                 return false;
             }
 
-            debugging('ytsubmission: submission_is_empty() - No data found, returning TRUE', DEBUG_DEVELOPER);
             return true;
 
         } catch (\Exception $e) {
-            debugging('ytsubmission: Error in submission_is_empty: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return true;
         }
     }

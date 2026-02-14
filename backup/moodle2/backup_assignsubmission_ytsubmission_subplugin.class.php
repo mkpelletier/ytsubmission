@@ -23,32 +23,51 @@ class backup_assignsubmission_ytsubmission_subplugin extends backup_subplugin {
      * @return backup_subplugin_element The backup structure
      */
     protected function define_submission_subplugin_structure() {
-        try {
-            // Create the wrapper element for the YouTube submission data.
-            $subplugin = $this->get_subplugin_element();
-            $subpluginwrapper = new backup_nested_element($this->get_recommended_name());
+        // Create the wrapper element for the YouTube submission data.
+        $subplugin = $this->get_subplugin_element();
+        $subpluginwrapper = new backup_nested_element($this->get_recommended_name());
 
-            // Define the YouTube submission element with its fields.
-            $subpluginyt = new backup_nested_element('submission_ytsubmission', array('id'), array(
-                'youtubeurl',
-                'videoid',
-                'videotitle',
-                'videoduration'
-            ));
+        // Define the YouTube submission element with its fields.
+        $subpluginyt = new backup_nested_element('submission_ytsubmission', ['id'], [
+            'assignment',
+            'youtubeid',
+            'videourl',
+            'thumbnail',
+            'timemodified',
+        ]);
 
-            // Build the tree structure.
-            $subplugin->add_child($subpluginwrapper);
-            $subpluginwrapper->add_child($subpluginyt);
+        // Define the comments element.
+        $subplugincomment = new backup_nested_element('submission_ytsubmission_comment', ['id'], [
+            'assignmentid',
+            'graderid',
+            'timestamp',
+            'comment',
+            'commenttype',
+            'timecreated',
+            'timemodified',
+        ]);
 
-            // Set the source for the YouTube submission data.
-            $subpluginyt->set_source_table('assignsubmission_ytsubmission', 
-                array('submission' => backup::VAR_PARENTID)
-            );
+        // Build the tree structure.
+        $subplugin->add_child($subpluginwrapper);
+        $subpluginwrapper->add_child($subpluginyt);
+        $subpluginyt->add_child($subplugincomment);
 
-            return $subplugin;
-        } catch (Exception $e) {
-            debugging('Error defining backup structure: ' . $e->getMessage(), DEBUG_DEVELOPER);
-            return null;
-        }
+        // Set the source for the YouTube submission data.
+        $subpluginyt->set_source_table('assignsubmission_ytsubmission',
+            ['submissionid' => backup::VAR_PARENTID]
+        );
+
+        // Set the source for the comments data.
+        $subplugincomment->set_source_table('assignsubmission_ytsubmission_comments',
+            ['submissionid' => backup::VAR_PARENTID]
+        );
+
+        // Annotate grader user IDs so they are mapped during restore.
+        $subplugincomment->annotate_ids('user', 'graderid');
+
+        // Annotate files for comments.
+        $subplugincomment->annotate_files('assignsubmission_ytsubmission', 'commentfiles', 'id');
+
+        return $subplugin;
     }
 }

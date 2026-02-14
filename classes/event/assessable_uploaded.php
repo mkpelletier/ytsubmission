@@ -55,7 +55,6 @@ class assessable_uploaded extends \core\event\assessable_uploaded {
                    "to the submission with id '$this->objectid' " .
                    "in the assignment activity with course module id '$this->contextinstanceid'.";
         } catch (\Exception $e) {
-            debugging('ytsubmission event: Error in get_description: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return "A YouTube video URL was uploaded.";
         }
     }
@@ -69,7 +68,6 @@ class assessable_uploaded extends \core\event\assessable_uploaded {
         try {
             return get_string('eventassessableuploaded', 'assignsubmission_ytsubmission');
         } catch (\Exception $e) {
-            debugging('ytsubmission event: Error in get_name: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return 'Assessable uploaded';
         }
     }
@@ -83,7 +81,6 @@ class assessable_uploaded extends \core\event\assessable_uploaded {
         try {
             return new \moodle_url('/mod/assign/view.php', array('id' => $this->contextinstanceid));
         } catch (\Exception $e) {
-            debugging('ytsubmission event: Error in get_url: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return new \moodle_url('/');
         }
     }
@@ -99,9 +96,7 @@ class assessable_uploaded extends \core\event\assessable_uploaded {
     public function set_assign(\assign $assign) {
         try {
             $this->assign = $assign;
-            debugging('ytsubmission event: Assignment instance set successfully', DEBUG_DEVELOPER);
         } catch (\Exception $e) {
-            debugging('ytsubmission event: Error in set_assign: ' . $e->getMessage(), DEBUG_DEVELOPER);
         }
     }
 
@@ -114,7 +109,6 @@ class assessable_uploaded extends \core\event\assessable_uploaded {
         try {
             return $this->assign;
         } catch (\Exception $e) {
-            debugging('ytsubmission event: Error in get_assign: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return null;
         }
     }
@@ -137,12 +131,9 @@ class assessable_uploaded extends \core\event\assessable_uploaded {
                 throw new \coding_exception('The \'pathnamehashes\' value must be set in other.');
             }
 
-            debugging('ytsubmission event: Data validation successful', DEBUG_DEVELOPER);
         } catch (\coding_exception $e) {
-            debugging('ytsubmission event: Validation error: ' . $e->getMessage(), DEBUG_DEVELOPER);
             throw $e;
         } catch (\Exception $e) {
-            debugging('ytsubmission event: Unexpected error in validate_data: ' . $e->getMessage(), DEBUG_DEVELOPER);
         }
     }
 
@@ -160,7 +151,6 @@ class assessable_uploaded extends \core\event\assessable_uploaded {
             }
             return array();
         } catch (\Exception $e) {
-            debugging('ytsubmission event: Error in get_legacy_logdata: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return array();
         }
     }
